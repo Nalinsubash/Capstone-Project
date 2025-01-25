@@ -6,3 +6,6 @@ scikit-learn>=1.0.2
 joblib>=1.4.2
 streamlit>=1.36.0
 thinc==8.2.5
+opencv-python
+numpy
+tensorflow
