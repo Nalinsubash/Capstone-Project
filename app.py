@@ -87,47 +87,32 @@ if mode == "📂 Upload an Image":
         st.subheader(f"🎭 Predicted Emotion: **{emotion}**")
 
 # -----------------------
-# 📷 Option 2: Use Webcam (Fixed)
+# 📷 Option 2: Use Webcam
 # -----------------------
 elif mode == "📷 Use Webcam":
-    st.write("Click 'Start Webcam' to begin capturing.")
-
-    # **Fix: Detect available webcams**
-    def get_available_cameras():
-        available_cameras = []
-        for i in range(3):  # Check first 3 camera indexes
-            cam = cv2.VideoCapture(i)
-            if cam.read()[0]:
-                available_cameras.append(i)
-            cam.release()
-        return available_cameras
-
-    available_cameras = get_available_cameras()
-
-    if not available_cameras:
+    st.write("Click 'Start' to capture from your webcam.")
+    cam = cv2.VideoCapture(0, cv2.CAP_DSHOW)  # Use cv2.CAP_V4L2 for Linux
+    
+    if not cam.isOpened():
         st.error("❌ No available webcams detected. Check your device settings.")
-        st.stop()
+    else:
+        if st.button("Start Webcam"):
+            time.sleep(2)  # Allow camera to initialize
+            while cam.isOpened():
+                ret, frame = cam.read()
+                if not ret:
+                    st.error("❌ Failed to capture image from webcam.")
+                    break
+                
+                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                st.image(frame_rgb, channels="RGB", caption="Live Webcam Feed")
+                
+                emotion = predict_emotion(frame)
+                if emotion:
+                    st.subheader(f"Predicted Emotion: **{emotion}**")
+                
+                if st.button("Stop Webcam"):
+                    cam.release()
+                    break
 
-    cam_index = available_cameras[0]  # Use the first detected camera
-    cam = cv2.VideoCapture(cam_index)
-
-    start_webcam = st.button("🎥 Start Webcam")
-
-    if start_webcam:
-        st.info(f"✅ Using Camera Index: {cam_index}")
-
-        FRAME_WINDOW = st.image([])
-        while cam.isOpened():
-            ret, frame = cam.read()
-            if not ret:
-                st.error("❌ Failed to capture image from webcam.")
-                break
-
-            emotion = predict_emotion(frame)
-
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            FRAME_WINDOW.image(frame, channels="RGB", caption=f"🎭 Predicted Emotion: {emotion}")
-
-            time.sleep(0.1)  # Prevent freezing
-
-        cam.release()
+st.success("✅ Ready for Emotion Detection!")
