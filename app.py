@@ -78,19 +78,36 @@ if uploaded_file is not None:
 # -----------------------
 # 📷 Webcam Option
 # -----------------------
+
 st.subheader("📷 Use Webcam for Real-time Detection")
 
-from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
-
-class EmotionVideoTransformer(VideoTransformerBase):
-    def transform(self, frame):
-        img = frame.to_ndarray(format="bgr24")  # Convert to OpenCV format
-        emotion = predict_emotion(img)  # Predict emotion
-        return img  # Return the original frame (we can overlay emotion text if needed)
-
-# Stream webcam
-webrtc_streamer(
-    key="emotion-detection",
-    video_processor_factory=EmotionVideoTransformer,
+RTC_CONFIGURATION = RTCConfiguration(
+    {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
 )
 
+class VideoProcessor:
+    def recv(self, frame):
+        img = frame.to_ndarray(format="bgr24")
+        emotion = predict_emotion(img)
+        img = cv2.putText(
+            img,
+            f"Emotion: {emotion}",
+            (10, 50),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1,
+            (0, 255, 0),
+            2,
+            cv2.LINE_AA,
+        )
+        return av.VideoFrame.from_ndarray(img, format="bgr24")
+
+webrtc_ctx = webrtc_streamer(
+    key="emotion-detection",
+    mode=WebRtcMode.SENDRECV,
+    rtc_configuration=RTC_CONFIGURATION,
+    video_processor_factory=VideoProcessor,
+    media_stream_constraints={"video": True, "audio": False},
+)
+
+if not webrtc_ctx.state.playing:
+    st.warning("⚠️ No available webcams detected. Check your device settings.")
