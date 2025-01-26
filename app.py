@@ -94,23 +94,29 @@ RTC_CONFIGURATION = {
 }
 
 # -------------------------------
-# ✅ Real-time Webcam Video Processing
+# ✅ Real-time Webcam Video Processing 
 # -------------------------------
 class VideoProcessor(VideoProcessorBase):
     def recv(self, frame: av.VideoFrame):
         image = frame.to_ndarray(format="bgr24")
-        emotion = predict_emotion(image)
-        st.write(f"🎭 **Predicted Emotion:** {emotion}")
-        return av.VideoFrame.from_ndarray(image, format="bgr24")
+        emotion = predict_emotion(image)  # Assume this function is defined
 
+        # ✅ Overlay text on the video frame
+        cv2.putText(
+            image, f"Emotion: {emotion}", (30, 30),
+            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA
+        )
+
+        return av.VideoFrame.from_ndarray(image, format="bgr24")
 # -------------------------------
-# ✅ Webcam Integration
+# ✅ Webcam Integration (Fix Applied)
 # -------------------------------
 st.subheader("📸 Use Webcam for Real-time Detection")
 
 webrtc_ctx = webrtc_streamer(
     key="example",
     rtc_configuration=RTC_CONFIGURATION,
+    video_processor_factory=VideoProcessor, 
     media_stream_constraints={"video": True, "audio": False},
     async_processing=True,  # ✅ Prevents Freezing
 )
@@ -119,4 +125,3 @@ if webrtc_ctx and webrtc_ctx.state.playing:
     st.write("🔵 **Webcam is running!**")
 else:
     st.write("🔴 **Webcam failed to start! Check network or browser settings.**")
-
