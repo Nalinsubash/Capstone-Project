@@ -8,10 +8,10 @@ import os
 
 
 # 🔹 Replace with your actual Google Drive FILE ID
-FILE_ID = "1X23YzabcdeFGHijkLMNOPQ"
+FILE_ID = "1-y0icKArgc0EvDuvfTaZQM4sk-EiWZzP"
 MODEL_PATH = "emotion_CNN_Final_model.h5"
 
-# 🔹 Google Drive Direct Download Link
+# 🔹 Google Drive Direct Download Link (gdown format)
 GDRIVE_URL = f"https://drive.google.com/uc?id={FILE_ID}"
 
 # 🔹 Download Model if Not Exists
