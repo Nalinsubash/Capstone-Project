@@ -12,3 +12,4 @@ requests
 streamlit-webrtc
 gdown
 av
+aiortc
