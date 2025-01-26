@@ -68,16 +68,16 @@ if uploaded_file is not None:
 # -----------------------
 st.subheader("📷 Use Webcam for Real-time Detection")
 
-RTC_CONFIGURATION = RTCConfiguration(
-    iceServers=[
+RTC_CONFIGURATION = {  # 🔹 Pass as a dictionary instead of an object
+    "iceServers": [
         {"urls": ["stun:stun.l.google.com:19302"]},
         {"urls": "turn:relay.metered.ca:80", "username": "open", "credential": "open"},
     ]
-)
+}
 
 webrtc_ctx = webrtc_streamer(
     key="example",
-    rtc_configuration=RTC_CONFIGURATION,
+    rtc_configuration=RTC_CONFIGURATION,  # ✅ Fixed: Now JSON serializable
     media_stream_constraints={"video": True, "audio": False},
     async_processing=True,
 )
@@ -89,4 +89,3 @@ if webrtc_ctx.video_receiver:
         st.write(f"Predicted Emotion: **{emotion}**")
     except Exception as e:
         st.error(f"Error processing webcam feed: {str(e)}")
-
