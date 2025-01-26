@@ -9,7 +9,8 @@ thinc==8.2.5
 opencv-python
 tensorflow
 requests
-streamlit-webrtc
 gdown
 av
 aiortc
+streamlit-webrtc
+opencv-python-headless
