@@ -87,63 +87,47 @@ if mode == "📂 Upload an Image":
         st.subheader(f"🎭 Predicted Emotion: **{emotion}**")
 
 # -----------------------
-# 📷 Option 2: Use Webcam (Improved Handling)
+# 📷 Option 2: Use Webcam (Fixed)
 # -----------------------
 elif mode == "📷 Use Webcam":
     st.write("Click 'Start Webcam' to begin capturing.")
 
-    # Initialize session state for webcam
-    if "webcam_active" not in st.session_state:
-        st.session_state.webcam_active = False
+    # **Fix: Detect available webcams**
+    def get_available_cameras():
+        available_cameras = []
+        for i in range(3):  # Check first 3 camera indexes
+            cam = cv2.VideoCapture(i)
+            if cam.read()[0]:
+                available_cameras.append(i)
+            cam.release()
+        return available_cameras
+
+    available_cameras = get_available_cameras()
+
+    if not available_cameras:
+        st.error("❌ No available webcams detected. Check your device settings.")
+        st.stop()
+
+    cam_index = available_cameras[0]  # Use the first detected camera
+    cam = cv2.VideoCapture(cam_index)
 
     start_webcam = st.button("🎥 Start Webcam")
 
     if start_webcam:
-        st.session_state.webcam_active = True
+        st.info(f"✅ Using Camera Index: {cam_index}")
 
-    stop_webcam = st.button("🛑 Stop Webcam")
+        FRAME_WINDOW = st.image([])
+        while cam.isOpened():
+            ret, frame = cam.read()
+            if not ret:
+                st.error("❌ Failed to capture image from webcam.")
+                break
 
-    if stop_webcam:
-        st.session_state.webcam_active = False
+            emotion = predict_emotion(frame)
 
-    # **Check for available webcams**
-    available_cameras = []
-    for i in range(3):  # Check the first 3 camera indexes
-        cam = cv2.VideoCapture(i)
-        if cam.read()[0]:
-            available_cameras.append(i)
-        cam.release()
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            FRAME_WINDOW.image(frame, channels="RGB", caption=f"🎭 Predicted Emotion: {emotion}")
 
-    if not available_cameras:
-        st.error("❌ No available webcam found. Please check your camera settings.")
-        st.session_state.webcam_active = False
-
-    # Run the webcam loop if active
-    if st.session_state.webcam_active:
-        cam_index = available_cameras[0]  # Pick the first available camera
-        cam = cv2.VideoCapture(cam_index)
-
-        if not cam.isOpened():
-            st.error("❌ Failed to open the webcam.")
-        else:
-            st.info(f"✅ Using Camera Index: {cam_index}")
-
-            FRAME_WINDOW = st.image([])
-            while st.session_state.webcam_active:
-                ret, frame = cam.read()
-                if not ret:
-                    st.error("❌ Failed to capture image from webcam.")
-                    break
-
-                emotion = predict_emotion(frame)
-
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                FRAME_WINDOW.image(frame, channels="RGB", caption=f"🎭 Predicted Emotion: {emotion}")
-
-                time.sleep(0.1)  # Small delay to prevent freezing
-
-            cam.release()
-            st.session_state.webcam_active = False
+            time.sleep(0.1)  # Prevent freezing
 
         cam.release()
-
