@@ -8,9 +8,11 @@ import requests
 import os
 
 # 🔹 Load Model from Google Drive
-FILE_ID = "1-y0icKArgc0EvDuvfTaZQM4sk-EiWZzP"
-MODEL_PATH = "emotion_CNN_Final_model.h5"
+FILE_ID = "1mrbEbFCQIk1MxZ1QghISipWfMQCNocf7"
+MODEL_PATH = "emotion_CNN_FInal_model.keras"
 GDRIVE_URL = f"https://drive.google.com/uc?id={FILE_ID}"
+
+https://drive.google.com/file/d/1mrbEbFCQIk1MxZ1QghISipWfMQCNocf7/view?usp=sharing
 
 if not os.path.exists(MODEL_PATH):
     st.write("⏳ Downloading Model from Google Drive...")
