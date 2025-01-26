@@ -44,10 +44,18 @@ mode = st.radio("Choose an option:", ("📷 Use Webcam", "📂 Upload an Image")
 def predict_emotion(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # Convert to grayscale
     resized = cv2.resize(gray, (48, 48))  # Resize to model input size
-    img_array = np.expand_dims(resized, axis=(0, -1))  # Add batch & channel dimensions
+
+    # Convert grayscale to RGB by stacking the grayscale image 3 times
+    rgb_img = np.stack((resized,) * 3, axis=-1)  # Shape: (48, 48, 3)
+
+    # Normalize & reshape
+    img_array = np.expand_dims(rgb_img, axis=0)  # Add batch dimension (1, 48, 48, 3)
     img_array = img_array / 255.0  # Normalize
+
+    # Predict emotion
     predictions = model.predict(img_array)
     predicted_label = class_labels[np.argmax(predictions)]
+    
     return predicted_label
 
 # -----------------------
