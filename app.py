@@ -65,7 +65,8 @@ st.title("🎭 Emotion Detection System")
 st.write("Upload an image or use your webcam to detect emotions!")
 
 # Select mode
-mode = st.radio("Choose an option:", ("📷 Use Webcam", "📂 Upload an Image"))
+# mode = st.radio("Choose an option:", ("📷 Use Webcam", "📂 Upload an Image"))
+mode = st.radio("Choose an option:", ("📂 Upload an Image","📷 Use Webcam"))
 
 # -----------------------
 # 📂 Option 1: Upload Image
