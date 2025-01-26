@@ -80,9 +80,16 @@ if uploaded_file is not None:
 RTC_CONFIGURATION = {
     "iceServers": [
         {"urls": "stun:stun.l.google.com:19302"},
+        {"urls": "stun:stun1.l.google.com:19302"},
+        {"urls": "stun:stun2.l.google.com:19302"},
+        {"urls": "stun:stun3.l.google.com:19302"},
+        {"urls": "stun:stun4.l.google.com:19302"},
         {"urls": "turn:relay.metered.ca:80", "username": "open", "credential": "open"},
         {"urls": "turn:relay.metered.ca:443", "username": "open", "credential": "open"},
         {"urls": "turn:relay.metered.ca:443?transport=tcp", "username": "open", "credential": "open"},
+        {"urls": "turn:openrelay.metered.ca:80", "username": "open", "credential": "open"},
+        {"urls": "turn:openrelay.metered.ca:443", "username": "open", "credential": "open"},
+        {"urls": "turn:openrelay.metered.ca:443?transport=tcp", "username": "open", "credential": "open"},
     ]
 }
 
@@ -104,10 +111,12 @@ st.subheader("📸 Use Webcam for Real-time Detection")
 webrtc_ctx = webrtc_streamer(
     key="example",
     rtc_configuration=RTC_CONFIGURATION,
-    video_processor_factory=VideoProcessor,  # ✅ Fix: Use video_processor_factory
     media_stream_constraints={"video": True, "audio": False},
     async_processing=True,  # ✅ Prevents Freezing
 )
 
 if webrtc_ctx and webrtc_ctx.state.playing:
     st.write("🔵 **Webcam is running!**")
+else:
+    st.write("🔴 **Webcam failed to start! Check network or browser settings.**")
+
