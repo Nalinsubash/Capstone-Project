@@ -87,11 +87,12 @@ if mode == "📂 Upload an Image":
         st.subheader(f"🎭 Predicted Emotion: **{emotion}**")
 
 # -----------------------
-# 📷 Option 2: Use Webcam
+# 📷 Option 2: Use Webcam (Improved Handling)
 # -----------------------
 elif mode == "📷 Use Webcam":
     st.write("Click 'Start Webcam' to begin capturing.")
 
+    # Initialize session state for webcam
     if "webcam_active" not in st.session_state:
         st.session_state.webcam_active = False
 
@@ -105,26 +106,44 @@ elif mode == "📷 Use Webcam":
     if stop_webcam:
         st.session_state.webcam_active = False
 
+    # **Check for available webcams**
+    available_cameras = []
+    for i in range(3):  # Check the first 3 camera indexes
+        cam = cv2.VideoCapture(i)
+        if cam.read()[0]:
+            available_cameras.append(i)
+        cam.release()
+
+    if not available_cameras:
+        st.error("❌ No available webcam found. Please check your camera settings.")
+        st.session_state.webcam_active = False
+
+    # Run the webcam loop if active
     if st.session_state.webcam_active:
-        cam = cv2.VideoCapture(0)
+        cam_index = available_cameras[0]  # Pick the first available camera
+        cam = cv2.VideoCapture(cam_index)
 
-        while True:
-            ret, frame = cam.read()
-            if not ret:
-                st.error("❌ Failed to capture image from webcam.")
-                break
+        if not cam.isOpened():
+            st.error("❌ Failed to open the webcam.")
+        else:
+            st.info(f"✅ Using Camera Index: {cam_index}")
 
-            # Predict emotion
-            emotion = predict_emotion(frame)
+            FRAME_WINDOW = st.image([])
+            while st.session_state.webcam_active:
+                ret, frame = cam.read()
+                if not ret:
+                    st.error("❌ Failed to capture image from webcam.")
+                    break
 
-            # Convert to RGB for Streamlit display
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            st.image(frame, channels="RGB", caption=f"🎭 Predicted Emotion: {emotion}")
+                emotion = predict_emotion(frame)
 
-            # Stop the webcam if the button is clicked
-            if stop_webcam:
-                cam.release()
-                break
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                FRAME_WINDOW.image(frame, channels="RGB", caption=f"🎭 Predicted Emotion: {emotion}")
+
+                time.sleep(0.1)  # Small delay to prevent freezing
+
+            cam.release()
+            st.session_state.webcam_active = False
 
         cam.release()
 
