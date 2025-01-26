@@ -5,7 +5,7 @@ import tensorflow as tf
 from tensorflow.keras.models import load_model
 import gdown
 import os
-from aiortc import RTCConfiguration, RTCIceServer
+from aiortc import RTCConfiguration
 from streamlit_webrtc import webrtc_streamer
 
 # 🔹 Disable GPU (if CUDA error is happening)
@@ -21,7 +21,7 @@ if not os.path.exists(MODEL_PATH):
     gdown.download(GDRIVE_URL, MODEL_PATH, quiet=False)
     st.write("✅ Model Downloaded Successfully!")
 
-# 🔹 Load the model without compiling to avoid optimizer mismatch
+# 🔹 Load the model without compiling
 try:
     model = load_model(MODEL_PATH, compile=False)
     st.write("✅ Model Loaded Successfully!")
@@ -69,13 +69,17 @@ if uploaded_file is not None:
 st.subheader("📷 Use Webcam for Real-time Detection")
 
 RTC_CONFIGURATION = RTCConfiguration(
-    {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
+    iceServers=[
+        {"urls": ["stun:stun.l.google.com:19302"]},
+        {"urls": "turn:relay.metered.ca:80", "username": "open", "credential": "open"},
+    ]
 )
 
 webrtc_ctx = webrtc_streamer(
     key="example",
     rtc_configuration=RTC_CONFIGURATION,
-    video_processor_factory=None,
+    media_stream_constraints={"video": True, "audio": False},
+    async_processing=True,
 )
 
 if webrtc_ctx.video_receiver:
@@ -85,8 +89,4 @@ if webrtc_ctx.video_receiver:
         st.write(f"Predicted Emotion: **{emotion}**")
     except Exception as e:
         st.error(f"Error processing webcam feed: {str(e)}")
-
-
-if not webrtc_ctx.state.playing:
-    st.warning("⚠️ No available webcams detected. Check your device settings.")
 
