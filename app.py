@@ -15,22 +15,21 @@ GDRIVE_URL = f"https://drive.google.com/uc?id={FILE_ID}"
 
 
 # 🔹 Download Model if Not Exists or is Empty
-if not os.path.exists(MODEL_PATH) or os.path.getsize(MODEL_PATH) == 0:
-    print("⏳ Downloading New Model from Google Drive...")
-    response = requests.get(GDRIVE_URL, stream=True)
-    with open(MODEL_PATH, "wb") as f:
-        for chunk in response.iter_content(chunk_size=1024):
-            if chunk:
-                f.write(chunk)
-    print("✅ Model Downloaded Successfully!")
+# Ensure the model file is downloaded
+if not os.path.exists(MODEL_PATH):
+    print("⏳ Downloading Model from Google Drive...")
+    try:
+        gdown.download(GDRIVE_URL, MODEL_PATH, quiet=False)
+        print("✅ Model Downloaded Successfully!")
+    except Exception as e:
+        print(f"❌ Error downloading model: {e}")
 
-# 🔹 Load the Updated Model
+# Load the model
 try:
-    model = load_model(MODEL_PATH)
+    model = tf.keras.models.load_model(MODEL_PATH)
     print("✅ Model Loaded Successfully!")
 except Exception as e:
     print(f"❌ Error loading model: {e}")
-    st.error(f"Error loading model: {e}")
 
 # Emotion Labels
 class_labels = ["angry", "disgust", "fear", "happy", "neutral", "sad", "surprise"]
