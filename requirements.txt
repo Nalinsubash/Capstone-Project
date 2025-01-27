@@ -14,3 +14,5 @@ av
 aiortc
 streamlit-webrtc
 opencv-python-headless
+transformers
+torch
