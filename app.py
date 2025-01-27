@@ -62,11 +62,17 @@ def predict_cnn_model(image):
 # ✅ Predict with Swin Transformer (Benchmark Model)
 # -------------------------------
 def predict_swin_transformer(image):
-    """Predict emotion using Swin Transformer."""
-    inputs = extractor(images=image, return_tensors="pt")
+    """Predict emotion using Swin Transformer Model."""
+    inputs = transform(image).unsqueeze(0).to(device)  # ✅ Ensure correct input shape
     outputs = swin_model(**inputs)
     preds = torch.nn.functional.softmax(outputs.logits, dim=-1)
+    
     predicted_class = torch.argmax(preds, dim=-1).item()
+    
+    # ✅ Prevent IndexError by checking bounds
+    if predicted_class >= len(class_labels):
+        return "Unknown"  # Return a default value instead of crashing
+    
     return class_labels[predicted_class]
 
 # -------------------------------
