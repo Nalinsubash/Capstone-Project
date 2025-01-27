@@ -37,13 +37,19 @@ class_labels = ["angry", "disgust", "fear", "happy", "neutral", "sad", "surprise
 # -------------------------------
 # ✅ Load Pretrained Swin Transformer Model
 # -------------------------------
-# ✅ Load the pre-trained Swin Transformer model & processor
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-transform = ViTImageProcessor.from_pretrained("microsoft/swin-tiny-patch4-window7-224")
+from transformers import AutoImageProcessor, SwinForImageClassification
+import torch
+
+# ✅ Load the pre-trained feature extractor (Fix ImportError)
+transform = AutoImageProcessor.from_pretrained("microsoft/swin-tiny-patch4-window7-224")
+
+# ✅ Ensure Swin model is properly loaded
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 swin_model = SwinForImageClassification.from_pretrained("microsoft/swin-tiny-patch4-window7-224")
 swin_model.to(device)
-swin_model.eval()  # ✅ Set to evaluation mode
+swin_model.eval()
+
 
 
 # -------------------------------
