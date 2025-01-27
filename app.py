@@ -41,10 +41,11 @@ swin_model = SwinForImageClassification.from_pretrained("microsoft/swin-base-pat
 # ✅ Image Preprocessing Function
 # -------------------------------
 def preprocess_image(image):
-    """Preprocess image for both models."""
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    resized = cv2.resize(image, (224, 224)) / 255.0
-    img_array = np.expand_dims(resized, axis=0)
+    """Preprocess image for emotion prediction (Ensure correct shape)."""
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # Convert to RGB
+    resized = cv2.resize(image, (100, 100))  # ✅ Resize to (100,100,3)
+    img_array = np.array(resized, dtype=np.float32) / 255.0  # Normalize
+    img_array = np.expand_dims(img_array, axis=0)  # Expand dims to match batch input
     return img_array
 
 # -------------------------------
