@@ -37,16 +37,14 @@ class_labels = ["angry", "disgust", "fear", "happy", "neutral", "sad", "surprise
 # -------------------------------
 # ✅ Load Pretrained Swin Transformer Model
 # -------------------------------
-
-
-# ✅ Load the pre-trained ViT feature extractor
-transform = ViTImageProcessor.from_pretrained("microsoft/swin-tiny-patch4-window7-224")
-
-# ✅ Ensure Swin model is loaded properly
+# ✅ Load the pre-trained Swin Transformer model & processor
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+transform = ViTImageProcessor.from_pretrained("microsoft/swin-tiny-patch4-window7-224")
 swin_model = SwinForImageClassification.from_pretrained("microsoft/swin-tiny-patch4-window7-224")
 swin_model.to(device)
-swin_model.eval()
+swin_model.eval()  # ✅ Set to evaluation mode
+
 
 # -------------------------------
 # ✅ Image Preprocessing Function
@@ -72,22 +70,27 @@ def predict_cnn_model(image):
 # -------------------------------
 # ✅ Predict with Swin Transformer (Benchmark Model)
 # -------------------------------
-def predict_swin_transformer(image):
-    """Predict emotion using Swin Transformer."""
-    # ✅ Convert image to tensor with correct shape
-    inputs = transform(images=image, return_tensors="pt").to(device)
-    
-    with torch.no_grad():
-        outputs = swin_model(**inputs)
+def preprocess_swin_image(image):
+    """Preprocess image for Swin Transformer input."""
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # Ensure correct color format
+    image = cv2.resize(image, (224, 224))  # Resize to Swin input size
+    inputs = transform(images=image, return_tensors="pt")  # Transform input
+    inputs = {k: v.to(device) for k, v in inputs.items()}  # Move to GPU if available
+    return inputs
 
-    preds = torch.nn.functional.softmax(outputs.logits, dim=-1)
-    predicted_class = torch.argmax(preds, dim=-1).item()
+def predict_swin_transformer(image):
+    """Predict emotion using Swin Transformer Model."""
+    inputs = preprocess_swin_image(image)
+    with torch.no_grad():  # ✅ Disable gradient computation for inference
+        outputs = swin_model(**inputs)
+        preds = torch.nn.functional.softmax(outputs.logits, dim=-1)
     
-    # ✅ Prevent IndexError
-    if predicted_class >= len(class_labels):
-        return "Unknown"  # Default value if class index is out of bounds
+    predicted_class_idx = torch.argmax(preds, dim=-1).item()
     
-    return class_labels[predicted_class]
+    if predicted_class_idx < len(class_labels):  # ✅ Ensure valid index
+        return class_labels[predicted_class_idx]
+    else:
+        return "Unknown"  # Fallback in case of index mismatch
 
 # -------------------------------
 # 🎭 Streamlit UI
