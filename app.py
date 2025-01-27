@@ -1,17 +1,17 @@
 import streamlit as st
-from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
 import cv2
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import load_model
+from tensorflow.keras.applications import DenseNet201
+from tensorflow.keras.applications.densenet import preprocess_input
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
+from tensorflow.keras.models import Model
 import gdown
 import os
-import av
-from transformers import ViTImageProcessor, SwinForImageClassification
-import torch
 
 # -------------------------------
-# ✅ Model Download from Google Drive
+# ✅ Model Download from Google Drive (Your Custom CNN)
 # -------------------------------
 FILE_ID = "1cqZfncbko6EMUx13IHeX4YsSO73LoqWv"
 MODEL_PATH = "emotion_CNN_Final_model.keras"
@@ -23,7 +23,7 @@ if not os.path.exists(MODEL_PATH):
     st.write("✅ Model Downloaded Successfully!")
 
 # -------------------------------
-# ✅ Load Your Fine-Tuned Model
+# ✅ Load Your Fine-Tuned CNN Model
 # -------------------------------
 try:
     cnn_model = load_model(MODEL_PATH)
@@ -35,30 +35,27 @@ except Exception as e:
 class_labels = ["angry", "disgust", "fear", "happy", "neutral", "sad", "surprise"]
 
 # -------------------------------
-# ✅ Load Pretrained Swin Transformer Model
+# ✅ Load Pretrained DenseNet201 (Benchmark Model)
 # -------------------------------
+st.write("⏳ Loading DenseNet201 Model for Benchmarking...")
+base_model = DenseNet201(weights="imagenet", include_top=False, input_shape=(224, 224, 3))
+x = GlobalAveragePooling2D()(base_model.output)
+x = Dense(512, activation="relu")(x)
+x = Dense(7, activation="softmax")(x)  # 7 Emotion Classes
 
-import torch
-from transformers import SwinForImageClassification
-
-# ✅ Force Swin Transformer to use CPU
-device = torch.device("cpu")
-swin_model = SwinForImageClassification.from_pretrained("microsoft/swin-tiny-patch4-window7-224")
-swin_model.to(device)
-swin_model.eval()
-
-
-
+densenet_model = Model(inputs=base_model.input, outputs=x)
+densenet_model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
+st.write("✅ DenseNet201 Benchmark Model Loaded Successfully!")
 
 # -------------------------------
-# ✅ Image Preprocessing Function
+# ✅ Image Preprocessing Function (Custom CNN)
 # -------------------------------
 def preprocess_image(image):
-    """Preprocess image for emotion prediction (Ensure correct shape)."""
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # Convert to RGB
-    resized = cv2.resize(image, (100, 100))  # ✅ Resize to (100,100,3)
-    img_array = np.array(resized, dtype=np.float32) / 255.0  # Normalize
-    img_array = np.expand_dims(img_array, axis=0)  # Expand dims to match batch input
+    """Preprocess image for Custom CNN Model."""
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    resized = cv2.resize(image, (100, 100))
+    img_array = np.array(resized, dtype=np.float32) / 255.0
+    img_array = np.expand_dims(img_array, axis=0)
     return img_array
 
 # -------------------------------
@@ -72,35 +69,32 @@ def predict_cnn_model(image):
     return predicted_label
 
 # -------------------------------
-# ✅ Predict with Swin Transformer (Benchmark Model)
+# ✅ Image Preprocessing Function (DenseNet201)
 # -------------------------------
-def preprocess_swin_image(image):
-    """Preprocess image for Swin Transformer input."""
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # Ensure correct color format
-    image = cv2.resize(image, (224, 224))  # Resize to Swin input size
-    inputs = transform(images=image, return_tensors="pt")  # Transform input
-    inputs = {k: v.to(device) for k, v in inputs.items()}  # Move to GPU if available
-    return inputs
+def preprocess_densenet_image(image):
+    """Preprocess image for DenseNet201 input."""
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    image = cv2.resize(image, (224, 224))  # Resize for DenseNet201
+    img_array = np.array(image, dtype=np.float32)
+    img_array = np.expand_dims(img_array, axis=0)
+    img_array = preprocess_input(img_array)  # Apply DenseNet201 preprocessing
+    return img_array
 
-def predict_swin_transformer(image):
-    """Predict emotion using Swin Transformer Model."""
-    inputs = preprocess_swin_image(image)
-    with torch.no_grad():  # ✅ Disable gradient computation for inference
-        outputs = swin_model(**inputs)
-        preds = torch.nn.functional.softmax(outputs.logits, dim=-1)
-    
-    predicted_class_idx = torch.argmax(preds, dim=-1).item()
-    
-    if predicted_class_idx < len(class_labels):  # ✅ Ensure valid index
-        return class_labels[predicted_class_idx]
-    else:
-        return "Unknown"  # Fallback in case of index mismatch
+# -------------------------------
+# ✅ Predict with DenseNet201 (Benchmark)
+# -------------------------------
+def predict_densenet_model(image):
+    """Predict emotion using DenseNet201 Benchmark Model."""
+    img_array = preprocess_densenet_image(image)
+    predictions = densenet_model.predict(img_array)
+    predicted_label = class_labels[np.argmax(predictions)]
+    return predicted_label
 
 # -------------------------------
 # 🎭 Streamlit UI
 # -------------------------------
 st.title("🎭 Emotion Detection Benchmarking")
-st.write("Compare **Your Fine-Tuned CNN Model** with **Swin Transformer**")
+st.write("Compare **Your Fine-Tuned CNN Model** with **DenseNet201**")
 
 # -------------------------------
 # ✅ Image Upload Option
@@ -116,7 +110,7 @@ if uploaded_file is not None:
 
     # Get Predictions
     cnn_emotion = predict_cnn_model(frame)
-    swin_emotion = predict_swin_transformer(frame)
+    densenet_emotion = predict_densenet_model(frame)
 
     # Display Results
     st.subheader("🔍 Benchmarking Results")
@@ -127,22 +121,7 @@ if uploaded_file is not None:
         st.success(f"🎭 Predicted Emotion: **{cnn_emotion}**")
 
     with col2:
-        st.subheader("🔥 Swin Transformer (Benchmark)")
-        st.warning(f"🎭 Predicted Emotion: **{swin_emotion}**")
+        st.subheader("🔥 DenseNet201 (Benchmark)")
+        st.warning(f"🎭 Predicted Emotion: **{densenet_emotion}**")
 
-# -------------------------------
-# ❌ Commented Out Webcam Integration (For Now)
-# -------------------------------
-# st.subheader("📸 Use Webcam for Real-time Detection")
-# webrtc_ctx = webrtc_streamer(
-#     key="example",
-#     rtc_configuration=RTC_CONFIGURATION,
-#     video_processor_factory=VideoProcessor, 
-#     media_stream_constraints={"video": True, "audio": False},
-#     async_processing=True,  # ✅ Prevents Freezing
-# )
-# if webrtc_ctx and webrtc_ctx.state.playing:
-#     st.write("🔵 **Webcam is running!**")
-# else:
-#     st.write("🔴 **Webcam failed to start! Check network or browser settings.**")
 
