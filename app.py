@@ -1,11 +1,14 @@
 import streamlit as st
-import os
-import gdown
-import torch
+from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
 import cv2
 import numpy as np
+import tensorflow as tf
 from tensorflow.keras.models import load_model
-from transformers import AutoFeatureExtractor, SwinForImageClassification
+import gdown
+import os
+import av
+from transformers import ViTImageProcessor, SwinForImageClassification
+import torch
 
 # -------------------------------
 # ✅ Model Download from Google Drive
@@ -34,8 +37,16 @@ class_labels = ["angry", "disgust", "fear", "happy", "neutral", "sad", "surprise
 # -------------------------------
 # ✅ Load Pretrained Swin Transformer Model
 # -------------------------------
-extractor = AutoFeatureExtractor.from_pretrained("microsoft/swin-base-patch4-window7-224")
-swin_model = SwinForImageClassification.from_pretrained("microsoft/swin-base-patch4-window7-224")
+
+
+# ✅ Load the pre-trained ViT feature extractor
+transform = ViTImageProcessor.from_pretrained("microsoft/swin-tiny-patch4-window7-224")
+
+# ✅ Ensure Swin model is loaded properly
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+swin_model = SwinForImageClassification.from_pretrained("microsoft/swin-tiny-patch4-window7-224")
+swin_model.to(device)
+swin_model.eval()
 
 # -------------------------------
 # ✅ Image Preprocessing Function
@@ -62,16 +73,19 @@ def predict_cnn_model(image):
 # ✅ Predict with Swin Transformer (Benchmark Model)
 # -------------------------------
 def predict_swin_transformer(image):
-    """Predict emotion using Swin Transformer Model."""
-    inputs = transform(image).unsqueeze(0).to(device)  # ✅ Ensure correct input shape
-    outputs = swin_model(**inputs)
-    preds = torch.nn.functional.softmax(outputs.logits, dim=-1)
+    """Predict emotion using Swin Transformer."""
+    # ✅ Convert image to tensor with correct shape
+    inputs = transform(images=image, return_tensors="pt").to(device)
     
+    with torch.no_grad():
+        outputs = swin_model(**inputs)
+
+    preds = torch.nn.functional.softmax(outputs.logits, dim=-1)
     predicted_class = torch.argmax(preds, dim=-1).item()
     
-    # ✅ Prevent IndexError by checking bounds
+    # ✅ Prevent IndexError
     if predicted_class >= len(class_labels):
-        return "Unknown"  # Return a default value instead of crashing
+        return "Unknown"  # Default value if class index is out of bounds
     
     return class_labels[predicted_class]
 
