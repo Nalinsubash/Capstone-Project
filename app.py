@@ -1,12 +1,11 @@
 import streamlit as st
-from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
+import os
+import gdown
+import torch
 import cv2
 import numpy as np
-import tensorflow as tf
 from tensorflow.keras.models import load_model
-import gdown
-import os
-import av
+from transformers import AutoFeatureExtractor, SwinForImageClassification
 
 # -------------------------------
 # ✅ Model Download from Google Drive
@@ -21,11 +20,11 @@ if not os.path.exists(MODEL_PATH):
     st.write("✅ Model Downloaded Successfully!")
 
 # -------------------------------
-# ✅ Load Model
+# ✅ Load Your Fine-Tuned Model
 # -------------------------------
 try:
-    model = load_model(MODEL_PATH)
-    st.write("✅ Model Loaded Successfully!")
+    cnn_model = load_model(MODEL_PATH)
+    st.write("✅ Custom CNN Model Loaded Successfully!")
 except Exception as e:
     st.error(f"❌ Error loading model: {e}")
 
@@ -33,31 +32,47 @@ except Exception as e:
 class_labels = ["angry", "disgust", "fear", "happy", "neutral", "sad", "surprise"]
 
 # -------------------------------
+# ✅ Load Pretrained Swin Transformer Model
+# -------------------------------
+extractor = AutoFeatureExtractor.from_pretrained("microsoft/swin-base-patch4-window7-224")
+swin_model = SwinForImageClassification.from_pretrained("microsoft/swin-base-patch4-window7-224")
+
+# -------------------------------
 # ✅ Image Preprocessing Function
 # -------------------------------
 def preprocess_image(image):
-    """Preprocess image for emotion prediction."""
+    """Preprocess image for both models."""
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    resized = cv2.resize(image, (100, 100))
-    img_array = np.array(resized, dtype=np.float32) / 255.0
-    img_array = np.expand_dims(img_array, axis=0)
+    resized = cv2.resize(image, (224, 224)) / 255.0
+    img_array = np.expand_dims(resized, axis=0)
     return img_array
 
 # -------------------------------
-# ✅ Predict Emotion Function
+# ✅ Predict with Custom CNN Model
 # -------------------------------
-def predict_emotion(image):
-    """Predict emotion from image using trained model."""
+def predict_cnn_model(image):
+    """Predict emotion using Custom CNN Model."""
     img_array = preprocess_image(image)
-    predictions = model.predict(img_array)
+    predictions = cnn_model.predict(img_array)
     predicted_label = class_labels[np.argmax(predictions)]
     return predicted_label
 
 # -------------------------------
+# ✅ Predict with Swin Transformer (Benchmark Model)
+# -------------------------------
+def predict_swin_transformer(image):
+    """Predict emotion using Swin Transformer."""
+    inputs = extractor(images=image, return_tensors="pt")
+    outputs = swin_model(**inputs)
+    preds = torch.nn.functional.softmax(outputs.logits, dim=-1)
+    predicted_class = torch.argmax(preds, dim=-1).item()
+    return class_labels[predicted_class]
+
+# -------------------------------
 # 🎭 Streamlit UI
 # -------------------------------
-st.title("🎭 Emotion Detection App")
-st.write("Upload an image or use your webcam for real-time emotion detection.")
+st.title("🎭 Emotion Detection Benchmarking")
+st.write("Compare **Your Fine-Tuned CNN Model** with **Swin Transformer**")
 
 # -------------------------------
 # ✅ Image Upload Option
@@ -66,62 +81,40 @@ st.subheader("📂 Upload an Image")
 uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png", "jpeg"])
 
 if uploaded_file is not None:
+    # Read and display uploaded image
     file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
     frame = cv2.imdecode(file_bytes, 1)
-    
     st.image(frame, channels="BGR", caption="Uploaded Image")
+
+    # Get Predictions
+    cnn_emotion = predict_cnn_model(frame)
+    swin_emotion = predict_swin_transformer(frame)
+
+    # Display Results
+    st.subheader("🔍 Benchmarking Results")
+    col1, col2 = st.columns(2)
     
-    emotion = predict_emotion(frame)
-    st.subheader(f"🎭 Predicted Emotion: **{emotion}**")
+    with col1:
+        st.subheader("🚀 Your Fine-Tuned CNN Model")
+        st.success(f"🎭 Predicted Emotion: **{cnn_emotion}**")
+
+    with col2:
+        st.subheader("🔥 Swin Transformer (Benchmark)")
+        st.warning(f"🎭 Predicted Emotion: **{swin_emotion}**")
 
 # -------------------------------
-# ✅ WebRTC Configuration (Fix Applied)
+# ❌ Commented Out Webcam Integration (For Now)
 # -------------------------------
-RTC_CONFIGURATION = {
-    "iceServers": [
-        {"urls": "stun:stun.l.google.com:19302"},
-        {"urls": "stun:stun1.l.google.com:19302"},
-        {"urls": "stun:stun2.l.google.com:19302"},
-        {"urls": "stun:stun3.l.google.com:19302"},
-        {"urls": "stun:stun4.l.google.com:19302"},
-        {"urls": "turn:relay.metered.ca:80", "username": "open", "credential": "open"},
-        {"urls": "turn:relay.metered.ca:443", "username": "open", "credential": "open"},
-        {"urls": "turn:relay.metered.ca:443?transport=tcp", "username": "open", "credential": "open"},
-        {"urls": "turn:openrelay.metered.ca:80", "username": "open", "credential": "open"},
-        {"urls": "turn:openrelay.metered.ca:443", "username": "open", "credential": "open"},
-        {"urls": "turn:openrelay.metered.ca:443?transport=tcp", "username": "open", "credential": "open"},
-    ]
-}
+# st.subheader("📸 Use Webcam for Real-time Detection")
+# webrtc_ctx = webrtc_streamer(
+#     key="example",
+#     rtc_configuration=RTC_CONFIGURATION,
+#     video_processor_factory=VideoProcessor, 
+#     media_stream_constraints={"video": True, "audio": False},
+#     async_processing=True,  # ✅ Prevents Freezing
+# )
+# if webrtc_ctx and webrtc_ctx.state.playing:
+#     st.write("🔵 **Webcam is running!**")
+# else:
+#     st.write("🔴 **Webcam failed to start! Check network or browser settings.**")
 
-# -------------------------------
-# ✅ Real-time Webcam Video Processing 
-# -------------------------------
-class VideoProcessor(VideoProcessorBase):
-    def recv(self, frame: av.VideoFrame):
-        image = frame.to_ndarray(format="bgr24")
-        emotion = predict_emotion(image)  # Assume this function is defined
-
-        # ✅ Overlay text on the video frame
-        cv2.putText(
-            image, f"Emotion: {emotion}", (30, 30),
-            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA
-        )
-
-        return av.VideoFrame.from_ndarray(image, format="bgr24")
-# -------------------------------
-# ✅ Webcam Integration (Fix Applied)
-# -------------------------------
-st.subheader("📸 Use Webcam for Real-time Detection")
-
-webrtc_ctx = webrtc_streamer(
-    key="example",
-    rtc_configuration=RTC_CONFIGURATION,
-    video_processor_factory=VideoProcessor, 
-    media_stream_constraints={"video": True, "audio": False},
-    async_processing=True,  # ✅ Prevents Freezing
-)
-
-if webrtc_ctx and webrtc_ctx.state.playing:
-    st.write("🔵 **Webcam is running!**")
-else:
-    st.write("🔴 **Webcam failed to start! Check network or browser settings.**")
