@@ -39,16 +39,14 @@ class_labels = ["angry", "disgust", "fear", "happy", "neutral", "sad", "surprise
 # -------------------------------
 
 import torch
-from transformers import AutoImageProcessor, SwinForImageClassification
+from transformers import SwinForImageClassification
 
-# ✅ Load feature extractor (Fix ImportError)
-transform = AutoImageProcessor.from_pretrained("microsoft/swin-tiny-patch4-window7-224")
-
-# ✅ Load Swin Transformer Model
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# ✅ Force Swin Transformer to use CPU
+device = torch.device("cpu")
 swin_model = SwinForImageClassification.from_pretrained("microsoft/swin-tiny-patch4-window7-224")
 swin_model.to(device)
 swin_model.eval()
+
 
 
 
