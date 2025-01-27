@@ -14,5 +14,5 @@ av
 aiortc
 streamlit-webrtc
 opencv-python-headless
-transformers>=4.30.0
-torch
+transformers>=4.34.0
+torch>=2.0.0
