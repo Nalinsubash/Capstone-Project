@@ -65,8 +65,7 @@ vgg_model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["a
 st.write("✅ VGGFace2 Benchmark Model Loaded Successfully!")
 
 # Emotion Labels
-class_labels = ["angry", "disgust", "fear", "happy", "neutral", "sad", "surprise"]
-
+class_labels = ["surprise", "fear", "disgust", "happy", "sad", "angry", "neutral"]
 # -------------------------------
 # ✅ Image Preprocessing Functions
 # -------------------------------
