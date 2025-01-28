@@ -18,7 +18,7 @@ CNN_MODEL_PATH = "emotion_CNN_Final_model.keras"
 CNN_GDRIVE_URL = f"https://drive.google.com/uc?id={CNN_FILE_ID}"
 
 if not os.path.exists(CNN_MODEL_PATH):
-    st.write("⏳ Downloading CNN model from Google Drive...")
+#    st.write("⏳ Downloading CNN model from Google Drive...")
     gdown.download(CNN_GDRIVE_URL, CNN_MODEL_PATH, quiet=False)
 #    st.write("✅ Custom CNN Model Downloaded Successfully!")
 
@@ -30,7 +30,7 @@ RESNET_MODEL_PATH = "ResNet50V2_final.keras"
 RESNET_GDRIVE_URL = f"https://drive.google.com/uc?id={RESNET_FILE_ID}"
 
 if not os.path.exists(RESNET_MODEL_PATH):
-    st.write("⏳ Downloading ResNet50V2 model from Google Drive...")
+#    st.write("⏳ Downloading ResNet50V2 model from Google Drive...")
     gdown.download(RESNET_GDRIVE_URL, RESNET_MODEL_PATH, quiet=False)
 #    st.write("✅ ResNet50V2 Model Downloaded Successfully!")
 
@@ -122,8 +122,8 @@ def predict_vgg_model(image):
 # -------------------------------
 # 🎭 Streamlit UI
 # -------------------------------
-st.title("🎭 Emotion Detection Benchmarking")
-st.write("Compare **Your Fine-Tuned CNN Model** with **ResNet50V2 & VGGFace2**")
+st.title("🔬 Emotion Detection: Custom CNN vs. Industry Benchmarks")
+st.write("Testing **Your Fine-Tuned Custom CNN Model** against **ResNet50** and **VGGFace2** – industry benchmark models for facial emotion recognition.")
 
 # -------------------------------
 # ✅ Image Upload Option
@@ -157,3 +157,9 @@ if uploaded_file is not None:
     with col3:
         st.subheader("🌟 VGGFace2 (Benchmark)")
         st.info(f"🎭 Predicted Emotion: **{vgg_emotion}**")
+        
+st.markdown("""
+---
+© 2025 **Nalin Manchanayaka** | All Rights Reserved  
+Developed for benchmarking **Custom CNN Model** against **Industry-Standard Emotion Recognition Models**.
+""")
