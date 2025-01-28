@@ -20,7 +20,7 @@ CNN_GDRIVE_URL = f"https://drive.google.com/uc?id={CNN_FILE_ID}"
 if not os.path.exists(CNN_MODEL_PATH):
     st.write("⏳ Downloading CNN model from Google Drive...")
     gdown.download(CNN_GDRIVE_URL, CNN_MODEL_PATH, quiet=False)
-    st.write("✅ Custom CNN Model Downloaded Successfully!")
+#    st.write("✅ Custom CNN Model Downloaded Successfully!")
 
 # -------------------------------
 # ✅ Model Download from Google Drive (Your ResNet50V2)
@@ -32,7 +32,7 @@ RESNET_GDRIVE_URL = f"https://drive.google.com/uc?id={RESNET_FILE_ID}"
 if not os.path.exists(RESNET_MODEL_PATH):
     st.write("⏳ Downloading ResNet50V2 model from Google Drive...")
     gdown.download(RESNET_GDRIVE_URL, RESNET_MODEL_PATH, quiet=False)
-    st.write("✅ ResNet50V2 Model Downloaded Successfully!")
+#    st.write("✅ ResNet50V2 Model Downloaded Successfully!")
 
 # -------------------------------
 # ✅ Load Your Fine-Tuned CNN Model
@@ -55,7 +55,7 @@ except Exception as e:
 # -------------------------------
 # ✅ Load Pretrained VGGFace2 Model (Benchmark Model)
 # -------------------------------
-st.write("⏳ Loading VGGFace2 Model for Benchmarking...")
+#st.write("⏳ Loading VGGFace2 Model for Benchmarking...")
 vgg_base = VGG16(weights="imagenet", include_top=False, input_shape=(224, 224, 3))
 y = GlobalAveragePooling2D()(vgg_base.output)
 y = Dense(512, activation="relu")(y)
