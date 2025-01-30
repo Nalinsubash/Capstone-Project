@@ -112,19 +112,11 @@ def predict_resnet50v2_model(image):
     predicted_label = class_labels[np.argmax(predictions)]
     return predicted_label
 
-#def predict_vgg_model(image):
- #   """Predict emotion using VGGFace2 Benchmark Model."""
- #   img_array = preprocess_vgg_image(image)
- #   predictions = vgg_model.predict(img_array)
- #   predicted_label = class_labels[np.argmax(predictions)]
- #   return predicted_label
-
 def predict_vgg_model(image):
     """Predict emotion using VGGFace2 Benchmark Model."""
     img_array = preprocess_vgg_image(image)
     predictions = vgg_model.predict(img_array)
-    st.write("VGGFace2 Raw Predictions:", predictions)  # Debugging output
-    predicted_label = CLASS_LABELS[np.argmax(predictions)]
+    predicted_label = class_labels[np.argmax(predictions)]
     return predicted_label
 
 
