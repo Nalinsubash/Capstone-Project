@@ -123,7 +123,7 @@ def predict_vgg_model(image):
 # 🎭 Streamlit UI
 # -------------------------------
 st.title("🔬 Emotion Detection: Custom CNN vs. Industry Benchmarks")
-st.write("Testing **Your Fine-Tuned Custom CNN Model** against **ResNet50** and **VGGFace2** – industry benchmark models for facial emotion recognition.")
+st.write("Testing **Custom CNN Model** against **Fine-Tuned ResNet50** and **VGGFace2** – industry benchmark models for facial emotion recognition.")
 
 # -------------------------------
 # ✅ Image Upload Option
@@ -147,11 +147,11 @@ if uploaded_file is not None:
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.subheader("🚀 Fine-Tuned CNN Model")
+        st.subheader("🚀 Custom CNN Model")
         st.success(f"🎭 Predicted Emotion: **{cnn_emotion}**")
 
     with col2:
-        st.subheader("🔥 ResNet50V2 (Your Fine-Tuned Model)")
+        st.subheader("🔥 ResNet50V2 (Fine-Tuned Model)")
         st.warning(f"🎭 Predicted Emotion: **{resnet50v2_emotion}**")
 
     with col3:
