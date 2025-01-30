@@ -147,7 +147,7 @@ if uploaded_file is not None:
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.subheader("🚀 Your Fine-Tuned CNN Model")
+        st.subheader("🚀 Fine-Tuned CNN Model")
         st.success(f"🎭 Predicted Emotion: **{cnn_emotion}**")
 
     with col2:
