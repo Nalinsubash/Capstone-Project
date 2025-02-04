@@ -156,7 +156,7 @@ if uploaded_file is not None:
         st.warning(f"🎭 Predicted Emotion: **{resnet50v2_emotion}**")
 
     with col3:
-        st.subheader("🌟 VGGFace2 (Benchmark)")
+        st.subheader("🌟 VGGFace2 ")
         st.info(f"🎭 Predicted Emotion: **{vgg_emotion}**")
         
 st.markdown("""
